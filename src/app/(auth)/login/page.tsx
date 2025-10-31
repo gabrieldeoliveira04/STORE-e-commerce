@@ -15,9 +15,7 @@ import type { AuthResponseCore } from "@/app/(auth)/login/types/contract";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  type TLoginSchema,
-} from "@/app/(auth)/login/schemas/loginSchema";
+import { type TLoginSchema } from "@/app/(auth)/login/schemas/loginSchema";
 import { loginSchema } from "@/app/(auth)/login/schemas/loginSchema";
 
 export default function LoginPage() {
@@ -47,6 +45,7 @@ export default function LoginPage() {
     setShowError(false);
     try {
       const response = await postLogin(data);
+      console.log("Login response:", response);
 
       const userData: AuthResponseCore = {
         userId: Number(response.userId),
@@ -84,18 +83,14 @@ export default function LoginPage() {
       {loading ? (
         <div className="flex flex-col gap-6">
           <div className="my-14 text-left">
-            <h2 className="text-sunset font-semibold text-6xl">
-              Bem-vindo!
-            </h2>
+            <h2 className="text-sunset font-semibold text-6xl">Bem-vindo!</h2>
             <h1 className="font-bold">
               Acesse sua conta para continuar suas compras ou gerenciar seu
               perfil na Mauve Store.
             </h1>
           </div>
           <div className="flex flex-col gap-4">
-            <h2 className="font-medium text-xl">
-              Verificando seu acesso
-            </h2>
+            <h2 className="font-medium text-xl">Verificando seu acesso</h2>
             <div className="flex items-center justify-center min-h-[300px]">
               <div className="loader" />
             </div>
@@ -105,9 +100,7 @@ export default function LoginPage() {
         <>
           <div className="flex flex-col gap-6 text-foreground">
             <div className="my-14 text-left">
-              <h2 className="text-sunset font-semibold text-6xl">
-                Bem-vindo!
-              </h2>
+              <h2 className="text-sunset font-semibold text-6xl">Bem-vindo!</h2>
               <h1 className="font-bold">
                 Acesse sua conta para continuar suas compras ou gerenciar seu
                 perfil na Mauve Store.
@@ -169,5 +162,3 @@ export default function LoginPage() {
     </AuthLayout>
   );
 }
-
-

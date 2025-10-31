@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "./provider";
@@ -5,16 +6,18 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ClientInterceptor } from "@/components/interceptorRequest/interceptor";
 
+// Configuração das fontes
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
-export const viewport = {
+// 🧭 Metadados globais do site
+export const metadata: Metadata = {
   title: "Store Feltec – Loja de Exemplo",
   description:
-    "Explore a Store Feltec, um projeto de loja de exemplo da Feltec Solutions. Encontre produtos com design moderno, qualidade garantida e gestão eficiente para seu negócio ou residência.",
+    "Explore a Store Feltec, um projeto de loja de exemplo da Feltec Solutions. Encontre produtos com design moderno, qualidade garantida e gestão eficiente.",
   keywords: [
     "Store Feltec",
     "loja de exemplo",
@@ -34,11 +37,6 @@ export const viewport = {
   publisher: "Feltec Solutions",
   themeColor: "#1F2937",
   colorScheme: "light dark",
-  icons: {
-    icon: "/icons/slack.svg",
-    shortcut: "/icons/slack.svg",
-    apple: "/icons/slack.svg",
-  },
   openGraph: {
     title: "Store Feltec – Loja de Exemplo",
     description:
@@ -73,9 +71,14 @@ export const viewport = {
       follow: true,
     },
   },
-  lang: "pt-BR",
+  icons: {
+    icon: "/icons/slack.svg",
+    shortcut: "/icons/slack.svg",
+    apple: "/icons/slack.svg",
+  },
 };
 
+// 🌐 Layout raiz
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
@@ -83,20 +86,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <main>{children}</main>
           <ClientInterceptor />
+          <main>{children}</main>
           <Toaster
             position="top-right"
             toastOptions={{
               style: {
-                padding: "18px 16px 18px 16px",
+                padding: "18px 16px",
+                fontSize: "14px",
               },
             }}
             containerStyle={{
               top: 76,
-              left: 20,
-              bottom: 20,
               right: 20,
+              bottom: 20,
+              left: 20,
             }}
           />
         </Providers>

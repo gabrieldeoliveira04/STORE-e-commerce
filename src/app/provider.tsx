@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/auth.ctx";
+import { CartProvider } from "@/contexts/cart.ctx";
 
 const queryClient = new QueryClient();
 
@@ -16,9 +17,11 @@ export function Providers({ children }: { children: ReactNode }) {
       <ThemeProvider defaultTheme="system" storageKey="elegance-theme">
         <TooltipProvider>
           <AuthProvider>
-            <Toaster />
-            <Sonner />
-            {children}
+            <CartProvider>
+              {children}
+              <Toaster />
+              <Sonner />
+            </CartProvider>
           </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>

@@ -16,6 +16,7 @@ import {
   // MessageCircle,
   UsersRound,
   ShoppingBag,
+  ShoppingCart,
   LogOut,
   UserRoundPen,
 } from "lucide-react";
@@ -47,6 +48,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
+import { useCart } from "@/contexts/cart.ctx";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,6 +59,7 @@ export function Header() {
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const { user, handleExitUser } = useContext(AuthContext);
+  const { totalQuantity } = useCart();
 
   const navigation = [
     { name: "Início", href: "/" },
@@ -218,8 +221,6 @@ export function Header() {
                 </SheetContent>
               </Sheet>
             )}
-
-
           </div>
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -227,10 +228,11 @@ export function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`relative px-3 py-2 text-sm font-medium transition-colors ${isActive(item.href)
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-                  }`}
+                className={`relative px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive(item.href)
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 {item.name}
                 {isActive(item.href) && (
@@ -271,6 +273,17 @@ export function Header() {
                     )}
                   </div>
                 </DropdownMenuTrigger>
+                {/* Carrinho */}
+                {user?.token && (
+                  <Link href="/carrinho" className="relative">
+                    <ShoppingCart className="h-6 w-6 text-foreground" />
+                    {totalQuantity > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                        {totalQuantity}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
                 <DropdownMenuContent className="rounded-lg shadow-lg min-w-[var(--radix-dropdown-menu-trigger-width)]">
                   {/* Personalização de Cor */}
@@ -308,14 +321,20 @@ export function Header() {
                   <DropdownMenuSeparator className="border-nc-base-400" />
 
                   {/* Configurações de Conta */}
-                  <DropdownMenuItem onClick={goToSettings} className="flex items-center justify-between cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={goToSettings}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
                     Configurações de conta <UserRoundPen />
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator className="border-nc-base-400" />
 
                   {/* Logout */}
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center justify-between cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
                     Sair da conta <LogOut />
                   </DropdownMenuItem>
 
@@ -326,7 +345,6 @@ export function Header() {
                     Versão {process.env.NEXT_PUBLIC_APP_VERSION}
                   </DropdownMenuLabel>
                 </DropdownMenuContent>
-
               </DropdownMenu>
             )}
 
@@ -363,10 +381,11 @@ export function Header() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 text-base font-medium rounded-md transition-colors ${isActive(item.href)
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
+                  className={`block px-3 py-2 text-base font-medium rounded-md transition-colors ${
+                    isActive(item.href)
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
                 >
                   {item.name}
                 </Link>

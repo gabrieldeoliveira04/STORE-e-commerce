@@ -1,10 +1,10 @@
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://portfolio-produtos-feltec.onrender.com/api";
+  "https://e-commerce-feltec.onrender.com/api";
 
 export async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
   const userData = localStorage.getItem("@NPG-auth-user-data");
   const token = userData ? JSON.parse(userData).token : null;
@@ -27,9 +27,7 @@ export async function apiRequest<T>(
 
   if (!res.ok) {
     const message =
-      data?.message ||
-      data?.title ||
-      `Erro ${res.status}: ${res.statusText}`;
+      data?.message || data?.title || `Erro ${res.status}: ${res.statusText}`;
     throw new Error(message);
   }
 

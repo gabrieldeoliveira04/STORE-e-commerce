@@ -13,11 +13,14 @@
 
 // Função que consome o endpoint /api/login
 export async function postLogin(data: { email: string; password: string }) {
-  const res = await fetch("https://portfolio-produtos-feltec.onrender.com/api/Users/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  const res = await fetch(
+    "https://e-commerce-feltec.onrender.com/api/Users/login",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
 
   if (!res.ok) {
     throw new Error("Credenciais inválidas");
@@ -32,4 +35,4 @@ export async function postLogin(data: { email: string; password: string }) {
     token: json.token,
     // refreshToken: json.refreshToken,
   };
-};
+}

@@ -1,27 +1,70 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageCircle } from "lucide-react";
+import { useState } from "react";
 import { Product } from "@/data/products";
-import { formatPrice, getWhatsAppUrl } from "@/lib/filters";
-import { siteConfig } from "@/config/site";
+import { formatPrice } from "@/lib/filters";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { ShoppingCart } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { decodeToken } from "@/lib/decodeToken";
+import { getAuthToken } from "@/services/localstorage.service";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const handleWhatsApp = () => {
-    const url = getWhatsAppUrl(product, siteConfig.contact.whatsapp);
-    window.open(url, "_blank");
-  };
+  const [quantity, setQuantity] = useState(1);
+  const router = useRouter();
   const stock = product.stock ?? 0;
   const price = product.price ?? 0;
-  const categoryName =
-    typeof product.category === "object"
-      ? product.category?.name
-      : "Sem categoria";
+
+  const token =
+    typeof window !== "undefined"
+      ? (() => {
+          try {
+            return getAuthToken();
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+  const decoded = token ? decodeToken(token) : null;
+  const userId = decoded?.id as number | undefined;
+
+  const handleAddToCart = async () => {
+    if (!token) {
+      toast.error("Você precisa estar logado para adicionar ao carrinho.");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `https://e-commerce-feltec.onrender.com/api/Carts/${userId}/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            productId: product.id,
+            quantity,
+          }),
+        },
+      );
+
+      if (!res.ok) throw new Error("Erro ao adicionar produto");
+
+      toast.success(`${product.name} foi adicionado ao carrinho!`);
+      router.push("/carrinho");
+    } catch (err) {
+      toast.error("Não foi possível adicionar ao carrinho.");
+    }
+  };
 
   return (
     <motion.div
@@ -42,7 +85,7 @@ export function ProductCard({ product }: ProductCardProps) {
       }}
       className="group relative bg-card border border-border/50 rounded-2xl overflow-hidden shadow-card transition-all duration-300"
     >
-      {/* Image */}
+      {/* Imagem */}
       <div className="relative aspect-square overflow-hidden bg-muted">
         <motion.img
           src={product.image ?? "/placeholder.png"}
@@ -62,20 +105,22 @@ export function ProductCard({ product }: ProductCardProps) {
           </Badge>
         </div>
 
-        {/* Category Badge */}
-        <div className="absolute top-3 left-3">
-          <Badge
-            variant="outline"
-            className="text-xs bg-background/80 backdrop-blur-sm"
-          >
-            {typeof product.category === "object"
-              ? product.category?.name
-              : product.category || "Sem categoria"}
-          </Badge>
-        </div>
+        {/* Categoria */}
+        {product.category && (
+          <div className="absolute top-3 left-3">
+            <Badge
+              variant="outline"
+              className="text-xs bg-background/80 backdrop-blur-sm"
+            >
+              {typeof product.category === "object"
+                ? product.category.name
+                : product.category}
+            </Badge>
+          </div>
+        )}
       </div>
 
-      {/* Content */}
+      {/* Conteúdo */}
       <div className="p-6">
         <h3 className="font-semibold text-lg text-foreground mb-2 dark:group-hover:text-white transition-colors">
           {product.name}
@@ -86,29 +131,21 @@ export function ProductCard({ product }: ProductCardProps) {
         </p>
 
         {/* Tags */}
-        {/* Tags */}
         <div className="flex flex-wrap gap-1 mb-4">
           {product.tags?.length ? (
             product.tags.slice(0, 3).map((tag: any, i: number) => {
-              // Se vier objeto { id, name }
-              if (typeof tag === "object" && tag?.name) {
+              if (typeof tag === "object" && tag?.name)
                 return (
                   <Badge key={i} variant="secondary" className="text-xs">
                     {tag.name}
                   </Badge>
                 );
-              }
-
-              // Se vier string
-              if (typeof tag === "string") {
+              if (typeof tag === "string")
                 return (
                   <Badge key={i} variant="secondary" className="text-xs">
                     {tag}
                   </Badge>
                 );
-              }
-
-              // Se vier número (label excluída)
               return null;
             })
           ) : (
@@ -123,15 +160,34 @@ export function ProductCard({ product }: ProductCardProps) {
           {formatPrice(price)}
         </div>
 
-        {/* WhatsApp */}
+        {/* Quantidade */}
+        <div className="flex items-center gap-2 mb-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+          >
+            -
+          </Button>
+          <span className="text-lg font-semibold">{quantity}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setQuantity((q) => q + 1)}
+            disabled={quantity >= stock}
+          >
+            +
+          </Button>
+        </div>
+
         <Button
-          onClick={handleWhatsApp}
+          onClick={handleAddToCart}
           disabled={stock <= 0}
-          className="w-full"
-          variant={stock > 0 ? "default" : "secondary"}
+          className="w-full mt-2"
+          variant="outline"
         >
-          <MessageCircle className="mr-2 h-4 w-4" />
-          {stock > 0 ? "Chamar no WhatsApp" : "Produto Esgotado"}
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Adicionar ao Carrinho
         </Button>
       </div>
     </motion.div>
