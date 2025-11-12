@@ -37,15 +37,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    try {
-      const res = await fetch("/api/cart", {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      const data = await res.json();
-      setItems(data.items || []);
-    } catch (error) {
-      console.error("Erro ao carregar o carrinho:", error);
-    }
+    // try {
+    //   const res = await fetch("/api/Carts", {
+    //     headers: { Authorization: `Bearer ${user.token}` },
+    //   });
+    //   const data = await res.json();
+    //   setItems(data.items || []);
+    // } catch (error) {
+    //   console.error("Erro ao carregar o carrinho:", error);
+    // }
   };
 
   useEffect(() => {

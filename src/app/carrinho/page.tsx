@@ -12,9 +12,21 @@ interface CartItem {
   quantity: number;
 }
 
+interface Endereco {
+  cep: string;
+  state: string;
+  city: string;
+  neighborhood: string;
+  street: string;
+}
+
 export default function Carrinho() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [cep, setCep] = useState("");
+  const [endereco, setEndereco] = useState<Endereco | null>(null);
+  const [freteValor, setFreteValor] = useState<number | null>(null);
+  const [carregandoFrete, setCarregandoFrete] = useState(false);
 
   const fetchCart = async () => {
     let token: string;
@@ -46,7 +58,7 @@ export default function Carrinho() {
       const data = await res.json();
       setItems(data.items || []);
       setTotal(data.total || 0);
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível carregar o carrinho.");
     }
   };
@@ -55,7 +67,51 @@ export default function Carrinho() {
     fetchCart();
   }, []);
 
-  // Remove item
+  // 🔹 Buscar endereço pelo CEP (BrasilAPI)
+  const handleBuscarEndereco = async () => {
+    if (cep.length < 8) {
+      toast.error("CEP inválido");
+      return;
+    }
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cep}`);
+      if (!res.ok) throw new Error("Erro ao buscar endereço");
+      const data = await res.json();
+      setEndereco(data);
+      toast.success("Endereço encontrado!");
+    } catch {
+      toast.error("Não foi possível localizar o CEP");
+      setEndereco(null);
+    }
+  };
+
+  // 🔹 Calcular frete (usando endpoint da sua API com Mercado Envios)
+  const handleCalcularFrete = async () => {
+    if (!cep) {
+      toast.error("Informe o CEP para calcular o frete");
+      return;
+    }
+
+    setCarregandoFrete(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/Shipping/calculate?cepDestino=${cep}`,
+      );
+
+      if (!res.ok) throw new Error("Erro ao calcular frete");
+
+      const data = await res.json();
+      const frete = data[0]; // pega o primeiro resultado
+      setFreteValor(parseFloat(frete.price));
+      toast.success(`Frete calculado: R$ ${frete.price}`);
+    } catch {
+      toast.error("Erro ao calcular o frete");
+    } finally {
+      setCarregandoFrete(false);
+    }
+  };
+
+  // 🔹 Remover produto
   const handleRemove = async (productId: number) => {
     let token: string;
     try {
@@ -89,12 +145,12 @@ export default function Carrinho() {
       });
 
       toast.success("Produto removido do carrinho");
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível remover o produto.");
     }
   };
 
-  // Atualiza quantidade
+  // 🔹 Atualizar quantidade
   const handleUpdateQuantity = async (productId: number, quantity: number) => {
     if (quantity < 1) return;
 
@@ -137,11 +193,12 @@ export default function Carrinho() {
         );
         return updated;
       });
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível atualizar a quantidade.");
     }
   };
 
+  // 🔹 Checkout com frete incluso
   const handleCheckout = async () => {
     if (items.length === 0) {
       toast.error("Carrinho vazio");
@@ -155,7 +212,6 @@ export default function Carrinho() {
     }
 
     try {
-      // 🔥 Converte o formato dos produtos para o que o backend espera
       const payload = {
         items: items.map((i) => ({
           title: i.productName,
@@ -163,6 +219,7 @@ export default function Carrinho() {
           currency_id: "BRL",
           unit_price: i.price,
         })),
+        frete: freteValor || 0,
       };
 
       const res = await fetch(
@@ -178,19 +235,22 @@ export default function Carrinho() {
       );
 
       const data = await res.json();
-      console.log("Checkout response:", data);
       if (!res.ok) throw new Error(data.error || "Erro no checkout");
 
       window.location.href = data.url;
-    } catch (err: any) {
-      console.error(err);
+    } catch {
       toast.error("Erro ao iniciar o pagamento");
     }
   };
+
+  const totalComFrete = total + (freteValor || 0);
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Meu Carrinho</h1>
+
       {items.length === 0 && <p>Carrinho vazio</p>}
+
       {items.map((item) => (
         <div
           key={item.productId}
@@ -233,9 +293,46 @@ export default function Carrinho() {
           </div>
         </div>
       ))}
+
+      <div className="mt-6">
+        <h2 className="font-semibold mb-2">Calcular Frete</h2>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Digite o CEP"
+            value={cep}
+            onChange={(e) => setCep(e.target.value.replace(/\D/g, ""))}
+            className="border px-3 py-1 rounded w-40"
+          />
+          <Button onClick={handleBuscarEndereco} variant="outline">
+            Buscar Endereço
+          </Button>
+          <Button onClick={handleCalcularFrete} disabled={carregandoFrete}>
+            {carregandoFrete ? "Calculando..." : "Calcular Frete"}
+          </Button>
+        </div>
+
+        {endereco && (
+          <div className="mt-3 text-sm text-gray-700">
+            <p>
+              <strong>Endereço:</strong> {endereco.street},{" "}
+              {endereco.neighborhood} — {endereco.city}/{endereco.state}
+            </p>
+          </div>
+        )}
+
+        {freteValor !== null && (
+          <p className="mt-3 text-green-600 font-semibold">
+            Frete: R$ {freteValor.toFixed(2)}
+          </p>
+        )}
+      </div>
+
       {items.length > 0 && (
         <div className="mt-6 text-right">
-          <p className="text-xl font-semibold">Total: R$ {total.toFixed(2)}</p>
+          <p className="text-xl font-semibold">
+            Total: R$ {totalComFrete.toFixed(2)}
+          </p>
           <Button className="mt-3" onClick={handleCheckout}>
             Finalizar Compra
           </Button>
