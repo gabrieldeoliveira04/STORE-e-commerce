@@ -86,6 +86,7 @@ export default function Carrinho() {
   };
 
   // 🔹 Calcular frete (usando endpoint da sua API com Mercado Envios)
+  // 🔹 Calcular frete corretamente (POST com corpo JSON)
   const handleCalcularFrete = async () => {
     if (!cep) {
       toast.error("Informe o CEP para calcular o frete");
@@ -95,16 +96,44 @@ export default function Carrinho() {
     setCarregandoFrete(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/Shipping/calculate?cepDestino=${cep}`,
+        "https://e-commerce-feltec.onrender.com/api/Shipping/calculate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: { postal_code: "09010120" }, // CEP de origem fixo da loja
+            to: { postal_code: cep },
+            package: { height: 10, width: 15, length: 20, weight: 1 },
+            options: { receipt: false, own_hand: false },
+          }),
+        },
       );
 
       if (!res.ok) throw new Error("Erro ao calcular frete");
 
       const data = await res.json();
-      const frete = data[0]; // pega o primeiro resultado
-      setFreteValor(parseFloat(frete.price));
-      toast.success(`Frete calculado: R$ ${frete.price}`);
-    } catch {
+      // Filtra apenas opções válidas
+      const validas = data.filter((d: any) => !d.error);
+
+      if (validas.length === 0) {
+        toast.error("Nenhuma transportadora disponível para este CEP");
+        setFreteValor(null);
+        return;
+      }
+
+      // Seleciona o frete mais barato
+      const maisBarato = validas.reduce((prev: any, curr: any) =>
+        parseFloat(curr.custom_price) < parseFloat(prev.custom_price)
+          ? curr
+          : prev,
+      );
+
+      setFreteValor(parseFloat(maisBarato.custom_price));
+      toast.success(
+        `Frete (${maisBarato.company.name} - ${maisBarato.name}): R$ ${maisBarato.custom_price}`,
+      );
+    } catch (err) {
+      console.error(err);
       toast.error("Erro ao calcular o frete");
     } finally {
       setCarregandoFrete(false);
